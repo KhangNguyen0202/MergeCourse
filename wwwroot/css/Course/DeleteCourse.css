@@ -1,7 +1,6 @@
-body{
-    font-family: 'Outfit', sans-serif;
-    background-color: var(--light-blue-color);
-    padding-top: 0;
+body {
+    padding-top: 0 !important;
+    background-color: var(--white-corlor) !important;
 }
 .banner img {
     width: 100%;
@@ -63,13 +62,20 @@ body{
 }
 
 .course-card .edit {
-    padding: 5px 10px;
-    font-size: 12px;
+    padding: 8px 16px; /* Increase padding for better touch target size */
+    font-size: 14px; /* Adjust font size for readability */
+    border-radius: 5px; /* Add border-radius for smooth edges */
+    background-color: var(--primary-color); /* Set a background color that matches your design */
+    color: #fff; /* White text for better contrast */
+    border: none; /* Remove border */
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 5px;
+    justify-content: center; /* Center the icon and text */
+    gap: 5px; /* Space between the icon and text */
+    transition: background-color 0.3s ease; /* Smooth hover transition */
 }
+
 
 
 .remove-button {

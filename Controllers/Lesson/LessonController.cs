@@ -25,6 +25,7 @@ namespace BrainStormEra.Controllers.Lessons
 			return View(lessons);
 		}
 
+
 		/// GET: Delete Lesson
 		[HttpGet]
 		public IActionResult DeleteLesson(string id)

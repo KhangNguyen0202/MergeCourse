@@ -9,11 +9,11 @@ public partial class Account
 
     public int? UserRole { get; set; }
 
-    public string? Username { get; set; }
+    public string Username { get; set; } = null!;
 
-    public string? Password { get; set; }
+    public string Password { get; set; } = null!;
 
-    public string? UserEmail { get; set; }
+    public string UserEmail { get; set; } = null!;
 
     public string? FullName { get; set; }
 
@@ -29,15 +29,19 @@ public partial class Account
 
     public string? UserPicture { get; set; }
 
-    public DateTime? AccountCreatedAt { get; set; }
+    public DateTime AccountCreatedAt { get; set; }
 
     public virtual ICollection<ChatbotConversation> ChatbotConversations { get; set; } = new List<ChatbotConversation>();
+
+    public virtual ICollection<Course> Courses { get; set; } = new List<Course>();
 
     public virtual ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
 
     public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
 
-    public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+    public virtual ICollection<Notification> NotificationCreatedByNavigations { get; set; } = new List<Notification>();
+
+    public virtual ICollection<Notification> NotificationUsers { get; set; } = new List<Notification>();
 
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
 

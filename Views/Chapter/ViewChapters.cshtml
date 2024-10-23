@@ -31,10 +31,10 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item"><a class="nav-link" href="#">DASHBOARD</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#">COURSE</a></li>
+                        <li class="nav-item"><a class="nav-link" href="@Url.Action("HomePageInstructor", "HomePageInstructor")">DASHBOARD</a></li>
+                        <li class="nav-item"><a class="nav-link" href="@Url.Action("DeleteCourse", "Course")">COURSE</a></li>
                         <li class="nav-item"><a class="nav-link" href="#">USER</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#">CERTIFICATE</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/Certificate/Certificates">CERTIFICATE</a></li>
                     </ul>
                     <div class="profile d-flex align-items-center">
                         <i class="fas fa-bell icon"></i>
@@ -47,14 +47,22 @@
             </div>
         </nav>
     </header>
-
     <div class="row">
         <!-- Sidebar -->
-        <div class="col-md-3 bg-light sidebar p-3">
-            <a class="btn btn-primary w-100 mb-3" href="@Url.Action("ChapterManagement", "Chapter", new { courseId = @ViewBag.CourseId })">Add Chapter</a>
-            <a class="btn btn-outline-secondary w-100 mb-3" href="@Url.Action("DeleteChapter", "Chapter", new { courseId = @ViewBag.CourseId })">Delete Chapter</a>
-            <a class="btn btn-outline-secondary w-100" href="@Url.Action("ViewChapters", "Chapter", new { courseId = @ViewBag.CourseId })">View Chapter</a>
-        </div>
+        @{
+
+            string userRole = Context.Request.Cookies["user_role"];
+
+
+            string courseId = Context.Request.Cookies["CourseId"];
+
+
+            <div class="col-md-3 bg-SECONDARY sidebar p-3">
+                <a class="btn btn-primary w-100 mb-3" href="@Url.Action("ChapterManagement", "Chapter", new { courseId = courseId })">Add Chapter</a>
+                <a class="btn btn-outline-secondary w-100 mb-3" href="@Url.Action("DeleteChapter", "Chapter",new { courseId = courseId })">Delete Chapter</a>
+                <a class="btn btn-outline-secondary w-100" href="@Url.Action("ViewChapters", "Chapter", new { courseId = courseId })">View Chapter</a>
+            </div>
+        }
 
         <!-- Main Content for View Chapter -->
         <div class="col-md-9 d-flex align-items-start vh-100">

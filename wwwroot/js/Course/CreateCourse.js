@@ -1,11 +1,5 @@
 
 
-var quill = new Quill('#editor-container', {
-    theme: 'snow'
-});
-
-
-
 
 document.getElementById("formFile").addEventListener("change", function(event) {
     const file = event.target.files[0];

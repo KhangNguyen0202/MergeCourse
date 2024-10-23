@@ -13,6 +13,9 @@
     <!-- Base CSS (Common Styles) -->
     <link rel="stylesheet" href="~/css/Chapter/EditChapter.css">
     <link href="~/css/baseChapter.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/base.css">
+    <link rel="stylesheet" href="~/css/HomePage/landing_page.css">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
 </head>
@@ -20,7 +23,7 @@
 <body>
 
 
-      <header class="container-fluid">
+    <header class="container-fluid">
         <nav class="navbar navbar-expand-lg">
             <div class="container-fluid">
                 <a class="navbar-brand" href="#">
@@ -32,10 +35,10 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item"><a class="nav-link" href="#">DASHBOARD</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#">COURSE</a></li>
+                        <li class="nav-item"><a class="nav-link" href="@Url.Action("HomePageInstructor", "HomePageInstructor")">DASHBOARD</a></li>
+                        <li class="nav-item"><a class="nav-link" href="@Url.Action("DeleteCourse", "Course")">COURSE</a></li>
                         <li class="nav-item"><a class="nav-link" href="#">USER</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#">CERTIFICATE</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/Certificate/Certificates">CERTIFICATE</a></li>
                     </ul>
                     <div class="profile d-flex align-items-center">
                         <i class="fas fa-bell icon"></i>
@@ -52,12 +55,20 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <div class="col-md-3 bg-light sidebar p-3">
-                <a class="btn btn-primary w-100 mb-3" href="@Url.Action("ChapterManagement", "Chapter", new { courseId = @ViewBag.CourseId })">Add Chapter</a>
-                <a class="btn btn-outline-secondary w-100 mb-3" href="@Url.Action("DeleteChapter", "Chapter", new { courseId = @ViewBag.CourseId })">Delete Chapter</a>
-                <a class="btn btn-outline-secondary w-100" href="@Url.Action("ViewChapters", "Chapter", new { courseId = @ViewBag.CourseId })">View Chapter</a>
-            </div>
+            @{
 
+                string userRole = Context.Request.Cookies["user_role"];
+
+
+                string courseId = Context.Request.Cookies["CourseId"];
+
+
+                <div class="col-md-3 bg-SECONDARY sidebar p-3">
+                    <a class="btn btn-primary w-100 mb-3" href="@Url.Action("ChapterManagement", "Chapter", new { courseId = courseId })">Add Chapter</a>
+                    <a class="btn btn-outline-secondary w-100 mb-3" href="@Url.Action("DeleteChapter", "Chapter",new { courseId = courseId })">Delete Chapter</a>
+                    <a class="btn btn-outline-secondary w-100" href="@Url.Action("ViewChapters", "Chapter", new { courseId = courseId })">View Chapter</a>
+                </div>
+            }
             <!-- Main Content for Edit Chapter -->
             <div class="col-md-9 d-flex align-items-starts vh-100">
                 <div class="card w-100 ">
@@ -70,17 +81,17 @@
                             <input type="hidden" asp-for="CourseId" />
                             <!-- Chapter Title -->
                             <input type="hidden" asp-for="ChapterId" />
-                           
+
                             <div class="mb-3">
                                 <label for="chapterTitle" class="form-label">Title Chapter</label>
-                                <input asp-for="ChapterName" type="text" class="form-control" id="chapterTitle" >
+                                <input asp-for="ChapterName" type="text" class="form-control" id="chapterTitle">
                                 <span asp-validation-for="ChapterId" class="text-danger"></span>
                             </div>
                             <!-- Chapter Description -->
                             <div class="mb-3">
                                 <label for="chapterDescription" class="form-label">Chapter Description</label>
-                                <textarea asp-for="ChapterDescription"  class="form-control" id="chapterDescription"
-                                    rows="5">This chapter dives into more complex topics.</textarea>
+                                <textarea asp-for="ChapterDescription" class="form-control" id="chapterDescription"
+                                          rows="5">This chapter dives into more complex topics.</textarea>
                                 <span asp-validation-for="ChapterName" class="text-danger"></span>
 
                             </div>
@@ -89,7 +100,7 @@
                                 <button type="submit" class="btn btn-primary" style="z-index: 1000;">Save</button>
                             </div>
                         </form>
-                       
+
 
                     </div>
                 </div>

@@ -4,6 +4,10 @@
     font-weight: bold;
 }
 
+body {
+    padding-top: 0 !important;
+    background-color: var(--white-corlor) !important;
+}
 /* Sidebar buttons customization */
 .sidebar .btn {
     font-weight: bold;
