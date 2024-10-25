@@ -20,8 +20,8 @@ namespace BrainStormEra
             builder.Services.AddControllersWithViews();
 
             // Configure DbContext with SQL Server
-            builder.Services.AddDbContext<SwpDb7Context>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("SwpDb7Context")));
+            builder.Services.AddDbContext<SwpMainFpContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("SwpMainFpContext")));
 
             // Add authentication services for cookies
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -58,7 +58,7 @@ namespace BrainStormEra
             // Map the controller routes with default route settings
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Login}/{action=LoginPage}/{id?}");
+                pattern: "{controller=Home}/{action=Index}/{id?}");
 
             app.Run();
         }

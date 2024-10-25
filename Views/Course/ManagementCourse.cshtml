@@ -1,0 +1,201 @@
+﻿@model List<BrainStormEra.Views.Course.ManagementCourseViewModel>
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Course Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+    <link rel="stylesheet" href="~/css/base.css">
+    <link rel="stylesheet" href="~/css/HomePage/landing_page.css">
+    <link rel="stylesheet" href="~/css/Course/ManagementCourse.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-wEmeIV1mKuiNp12S5ZgFv3qdn7mQbso5mZlDR5A8P75jph8qf7ST8f7nU5V0WLFp" crossorigin="anonymous" defer></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+            crossorigin="anonymous" defer></script>
+
+
+
+</head>
+
+<body class="delete-course">
+
+    @{
+
+        string userRole = Context.Request.Cookies["user_role"];
+    }
+
+    @if (userRole == "2") { 
+        @await Html.PartialAsync("~/Views/Shared/Instrutor/Header/_Header.cshtml")
+    }
+    else if (userRole == "1")
+    {
+        @await Html.PartialAsync("~/Views/Shared/Admin/Header/_Header.cshtml")
+
+    }
+    else if (userRole == "1")
+    {
+        @await Html.PartialAsync("~/Views/Shared/Learner/Header/_Header.cshtml")
+
+    }
+
+
+    <!-- Banner Section -->
+    <div class="banner mb-3">
+        <div class="container text-center">
+            <img class="img-fluid" src="../assests/img/thumnail_search-course.png" alt="Banner Image">
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Filters Section -->
+        <div class="filters mb-3">
+            <div class="categories d-flex flex-wrap justify-content-center gap-2 p-1">
+                <button class="btn btn-link text-dark font-weight-bold">All courses</button>
+                <button class="btn btn-link text-dark font-weight-bold">Business</button>
+                <button class="btn btn-link text-dark font-weight-bold">IT &amp; Software</button>
+                <button class="btn btn-link text-dark font-weight-bold">Design</button>
+                <button class="btn btn-link text-dark font-weight-bold">Health</button>
+                <button class="btn btn-link text-dark font-weight-bold">Math and Logic</button>
+            </div>
+            <div class="search d-flex align-items-center mt-2">
+                <input class="form-control mb-0 mr-2 search-input" placeholder="Search..." type="text" />
+
+                @if (userRole == "2")
+                {
+                    <a href="@Url.Action("CreateCourse", "Course")" class="btn btn-success add-course-btn">Add Course</a>
+                }
+            </div>
+        </div>
+
+
+        <div class="courses row">
+
+            @foreach (var c in Model)
+            {
+
+                
+               Context.Response.Cookies.Append("CourseId", c.CourseId);
+                
+                
+                <div class="course-card col-12 col-md-6 col-lg-3 mb-4">
+                  
+                    <div class="card h-100 ">
+
+                        @if (userRole == "3" || userRole == "2")
+                        {
+                            <div class="position-absolute remove-button" style="top: 10px; right: 10px;">
+                                <button class="btn btn-danger btn-sm remove course-action" data-action="delete" data-courseid="@c.CourseId">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        }
+                        <a href="javascript:void(0);" onclick="viewDetailCourse('@c.CourseId')">
+                            <img class="card-img-top" src="~/lib/img/Login/BrainStormEra_logo.png" alt="Course Image"> @* src="@c.CoursePicture" *@
+                            <div class="card-body">
+                                <h5 class="card-title">@c.CourseName</h5>
+                                <p class="card-text text-muted"> @c.Price $</p>
+                                <p class="card-text text-muted">Created by @c.CreatedBy</p>
+                                <div class="rating">
+                                    <span class="stars" data-rating="@c.StarRating"></span>
+                                </div>
+                            </div>
+                        </a>
+
+                        @if (userRole == "2")
+                        {
+                            <div class="card-footer d-flex justify-content-end">
+                                <button class="btn btn-outline-primary edit btn-sm course-action" data-action="edit" data-courseid="@c.CourseId">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                      
+                  
+            }
+        </div>
+    </div>
+
+
+    <footer class="bg-secondary text-white py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <h3>BrainStormEra</h3>
+                    <div class="social-icons my-2">
+                        <i class="fab fa-facebook me-2"></i>
+                        <i class="fab fa-instagram me-2"></i>
+                        <i class="fab fa-x-twitter"></i>
+                    </div>
+                    <p>2024 by BrainStormEra.</p>
+                </div>
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <h4>Contact Us</h4>
+                    <p class="mb-1">Tel: 123-456-789</p>
+                    <p>Email: brainstormera@edu.vn</p>
+                </div>
+                <div class="col-md-4">
+                    <h4>Address</h4>
+                    <p class="mb-1">123 Nguyen Van Cu, Cai Rang</p>
+                    <p>District, Cantho, Vietnam</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function viewDetailCourse(courseId) {
+            // Lưu courseId vào cookie
+            document.cookie = "CourseId=" + courseId + "; path=/";
+
+            // Chuyển hướng đến trang chi tiết khóa học
+            window.location.href = "/Course/CourseDetail";  // Cập nhật đường dẫn đến CourseDetail
+        }
+
+
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.course-action').forEach(button => {
+                button.addEventListener('click', function (event) {
+                    event.stopPropagation();
+                    event.preventDefault();
+
+                    const action = this.getAttribute('data-action');
+                    const courseId = this.getAttribute('data-courseid');
+
+                    if (action === 'edit') {
+                        setCookie('CourseId', courseId);
+                        window.location.href = "/Course/EditCourse";
+                    } else if (action === 'delete') {
+                        const isConfirmed = confirm("Are you sure you want to delete this course?");
+                        if (isConfirmed) {
+                            setCookie('CourseId', courseId);
+                            window.location.href = "/Course/ConfirmDelete";
+                        }
+                    }
+                });
+            });
+        });
+
+        function setCookie(name, value) {
+            document.cookie = `${name}=${value}; path=/`;
+        }
+</script>
+    <script src="~/js/Course/DeleteCourse.js"></script>
+
+</body>
+
+</html>

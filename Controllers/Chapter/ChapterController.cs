@@ -10,19 +10,31 @@ namespace BrainStormEra.Controllers.Chapter
     public class ChapterController : Controller
     {
 
-        private readonly SwpDb7Context _context; // Define the context as a private field
+        private readonly SwpMainFpContext _context; // Define the context as a private field
 
-        public ChapterController(SwpDb7Context context)
+        public ChapterController(SwpMainFpContext context)
         {
             _context = context; // Properly assign the injected context to the private field
         }
 
 
-        [HttpGet("/Chapter/EditChapter/{chapterId}")]
-        public IActionResult EditChapter(String chapterId)
+
+
+
+
+
+
+
+
+
+
+        public IActionResult EditChapter()
         {
+            var chapterId = HttpContext.Request.Cookies["ChapterId"];
+
             var chapter = _context.Chapters
                 .Where(ch => ch.ChapterId == chapterId)
+                .OrderBy(ch => ch.ChapterOrder) // Sắp xếp theo ChapterOrder
                 .Select(ch => new BrainStormEra.Models.Chapter
                 {
                     ChapterId = ch.ChapterId,
@@ -35,10 +47,7 @@ namespace BrainStormEra.Controllers.Chapter
                     ChapterCreatedAt = ch.ChapterCreatedAt
                 })
                 .FirstOrDefault();
-            if (chapter == null)
-            {
-                return NotFound();
-            }
+
             return View(chapter);
         }
 
@@ -48,20 +57,23 @@ namespace BrainStormEra.Controllers.Chapter
         {
             var existingChapter = _context.Chapters.Find(chapter.ChapterId);
 
-           
+
             existingChapter.ChapterName = chapter.ChapterName;
             existingChapter.ChapterDescription = chapter.ChapterDescription;
             _context.SaveChanges();
 
-            return RedirectToAction("ViewChapters", new { courseId = chapter.CourseId });
+            return RedirectToAction("ViewChapters");
         }
 
 
         [HttpGet]
-        public IActionResult ViewChapters(string courseId)
+        public IActionResult ViewChapters()
         {
+            var courseId = HttpContext.Request.Cookies["CourseId"];
+
             var chapters = _context.Chapters
                 .Where(ch => ch.CourseId == courseId)
+                .OrderBy(ch => ch.ChapterOrder) // Sắp xếp theo ChapterOrder
                 .Select(ch => new BrainStormEra.Models.Chapter
                 {
                     ChapterId = ch.ChapterId,
@@ -82,31 +94,27 @@ namespace BrainStormEra.Controllers.Chapter
         [HttpGet]
         public async Task<IActionResult> CreateChapter(string courseId)
         {
-            if (string.IsNullOrEmpty(courseId))
-            {
-                return BadRequest("Course ID is required.");
-            }
+
             var existingChapters = await _context.Chapters
                 .Where(ch => ch.CourseId == courseId)
                 .ToListAsync();
             return View(existingChapters);
         }
-        public IActionResult EditChapter()
-        {
-            return View();
-        }
 
 
 
 
-        //DELETE
 
-
+        // GET DELETE
         [HttpGet]
-        public IActionResult DeleteChapter(string courseId)
+        public IActionResult DeleteChapter()
         {
+            var courseId = HttpContext.Request.Cookies["CourseId"];
+
+
             var chapters = _context.Chapters
                 .Where(ch => ch.CourseId == courseId)
+                .OrderBy(ch => ch.ChapterOrder) // Sắp xếp theo ChapterOrder
                 .Select(ch => new BrainStormEra.Models.Chapter
                 {
                     ChapterId = ch.ChapterId,
@@ -118,28 +126,19 @@ namespace BrainStormEra.Controllers.Chapter
                     ChapterCreatedAt = ch.ChapterCreatedAt
                 })
                 .ToList();
+
             return View(chapters);
         }
-
-
-
-
-
 
         [HttpPost]
         public IActionResult DeleteChapter(List<string> ChapterIds)
         {
             var chaptersToDelete = _context.Chapters.Where(ch => ChapterIds.Contains(ch.ChapterId)).ToList();
             var courseId = chaptersToDelete.FirstOrDefault()?.CourseId;
-            if (ChapterIds == null || !ChapterIds.Any())
-            {
-                return RedirectToAction("DeleteChapter", new { courseId = courseId });
-            }
-          
             // Xóa các chương
             _context.Chapters.RemoveRange(chaptersToDelete);
             _context.SaveChanges();
-            return RedirectToAction("DeleteChapter", new { courseId = courseId });
+            return RedirectToAction("DeleteChapter");
         }
 
 
@@ -147,26 +146,11 @@ namespace BrainStormEra.Controllers.Chapter
 
 
 
-        //ADD
-
-        //public IActionResult ChapterManagement(String courseId)
-        //{
-        //    Response.Cookies.Append("CourseId", courseId.ToString());
-        //    if (string.IsNullOrEmpty(courseId))
-        //    {
-        //        RedirectToAction("ViewChapters");
-        //    }
-        //    return View();
-        //}
-
+        //ADD chapter
 
         [HttpGet]
-        public IActionResult ChapterManagement(String courseId)
+        public IActionResult ChapterManagement()
         {
-            if (string.IsNullOrEmpty(courseId))
-            {
-                RedirectToAction("ViewChapters");
-            }
             return View();
         }
 
@@ -176,36 +160,55 @@ namespace BrainStormEra.Controllers.Chapter
         [HttpPost]
         public IActionResult ChapterManagement(BrainStormEra.Models.Chapter chapter)
         {
-            if (!ModelState.IsValid)
+            var courseId = HttpContext.Request.Cookies["CourseId"];
+
+
+
+            // Kiểm tra trùng tên chương trong cùng khóa học
+            var existingChapter = _context.Chapters
+                .Where(c => c.CourseId == courseId && c.ChapterName == chapter.ChapterName)
+                .FirstOrDefault();
+
+            if (existingChapter != null)
             {
-                return View(chapter);
+                ModelState.AddModelError("ChapterName", "Chapter name already exists in this course. Please choose a different name.");
+                return View(chapter); // Trả về view với thông báo lỗi
             }
 
-            if (string.IsNullOrEmpty(chapter.CourseId))
-            {
-                return View(chapter);
-            }
-
+            // Lấy chapter cuối cùng của khóa học dựa trên CourseId, sắp xếp theo ChapterOrder
             var lastChapterOrder = _context.Chapters
-           .Where(c => c.CourseId == chapter.CourseId)
-           .OrderByDescending(c => c.ChapterOrder)
-           .Select(c => c.ChapterOrder)
-           .FirstOrDefault();
+        .Where(c => c.CourseId == courseId)
+        .OrderByDescending(c => c.ChapterOrder)
+        .Select(c => c.ChapterOrder)
+        .FirstOrDefault();
 
-            chapter.ChapterOrder = (lastChapterOrder == null || lastChapterOrder == 0) ? 1 : lastChapterOrder + 1;
+
+            var newChapterOrder = (lastChapterOrder == 0 || lastChapterOrder == null) ? 1 : lastChapterOrder + 1;
+
+            // Lấy ChapterId cuối cùng trong cơ sở dữ liệu
+            var lastChapter = _context.Chapters.OrderByDescending(c => c.ChapterId).FirstOrDefault();
+            // Tạo ChapterId mới dựa trên ChapterId cuối cùng
+            var newChapterId = lastChapter == null ? "CH001" : "CH" + (int.Parse(lastChapter.ChapterId.Substring(2)) + 1).ToString("D3");
+
+            // chapter order 
+            // Tự động tăng ChapterOrder
             var newChapter = new BrainStormEra.Models.Chapter
+
             {
-                ChapterId = chapter.ChapterId,
+                ChapterId = newChapterId,
                 ChapterName = chapter.ChapterName,
                 ChapterDescription = chapter.ChapterDescription,
-                ChapterOrder = chapter.ChapterOrder,
-                CourseId = chapter.CourseId,
+                ChapterOrder = newChapterOrder,
+                CourseId = courseId,
                 ChapterStatus = 0
             };
+
+
+
             _context.Chapters.Add(newChapter);
             _context.SaveChanges();
 
-            return RedirectToAction("ViewChapters", new { courseId = newChapter.CourseId });
+            return RedirectToAction("ViewChapters");
         }
 
 

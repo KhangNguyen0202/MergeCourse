@@ -13,7 +13,7 @@ public partial class Enrollment
 
     public int? EnrollmentStatus { get; set; }
 
-    public bool? ApprovedByAdmin { get; set; }
+    public bool? Approved { get; set; }
 
     public DateOnly? CertificateIssuedDate { get; set; }
 

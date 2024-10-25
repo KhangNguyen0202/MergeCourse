@@ -17,7 +17,7 @@ public partial class Account
 
     public string? FullName { get; set; }
 
-    public int? PaymentPoint { get; set; }
+    public decimal? PaymentPoint { get; set; }
 
     public DateOnly? DateOfBirth { get; set; }
 

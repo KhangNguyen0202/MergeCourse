@@ -1,8 +1,7 @@
 body {
-    padding-top: 0 !important;
+    padding-top: 70px !important;
     background-color: var(--white-corlor) !important;
 }
-
 .sidebar {
     background-color: var(--white-color);
     border-radius: 14px;

@@ -1,7 +1,7 @@
 /* Gradient Header */
 .gradient-header {
-    background: linear-gradient(to right,var(--main-color),
-        var(--secondary-color));
+    background: linear-gradient(to right,var(--main-color);
+        
 }
 
 /* Sidebar buttons customization */

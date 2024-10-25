@@ -25,39 +25,9 @@
 
 <body>
 
-    @{
-
-        string courseId = Context.Request.Cookies["CourseId"];
-    }
     
-    <header class="container-fluid">
-        <nav class="navbar navbar-expand-lg">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="#">
-                    <img src="~/lib/img/BrainStormEra_logo.png" alt="Logo" class="logo_img">
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item"><a class="nav-link" href="@Url.Action("HomePageInstructor", "HomePageInstructor")">DASHBOARD</a></li>
-                        <li class="nav-item"><a class="nav-link" href="@Url.Action("DeleteCourse", "Course")">COURSE</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#">USER</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/Certificate/Certificates">CERTIFICATE</a></li>
-                    </ul>
-                    <div class="profile d-flex align-items-center">
-                        <i class="fas fa-bell icon"></i>
-                        <img src="../assests/img/landing_page/user.jpg" alt="Profile Picture" class="user_img">
-                        <span class="d-none d-md-inline">User</span>
-                        <i class="fas fa-chevron-down d-none d-md-inline"></i>
-                        <i class="fa-solid fa-arrow-right-from-bracket exit_icon"></i>
-                    </div>
-                </div>
-            </div>
-        </nav>
-    </header>
+    @await Html.PartialAsync("~/Views/Shared/Instrutor/Header/_Header.cshtml")
+
 
     <div class="container-fluid">
         <div class="row">
@@ -85,9 +55,9 @@
                 </div>
             </nav>
 
-            <main class="col-md-9">
+            <main class="col-md-10">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h2 class="main-header mt-3">Add COURSE</h2>
+                    <h2 class="main-header mt-3">ADD COURSE</h2>
                 </div>
                 <div class="card mb-4">
                     <div class="card-header">
@@ -98,13 +68,7 @@
                         <form method="post" enctype="multipart/form-data">
 
 
-                            <div class="mb-3">
-                                <label for="courseId" class="form-label">Course ID</label>
-                                <input asp-for="CourseId" type="text" class="form-control" id="courseId" placeholder="Enter course ID">
-                                <span asp-validation-for="CourseId" class="text-danger"></span>
-
-                            </div>
-
+                           
                             <div class="mb-3">
                                 <label for="courseName" class="form-label">Name course</label>
                                 <input asp-for="CourseName" type="text" class="form-control" id="courseName" placeholder="Edit name course">
@@ -129,10 +93,10 @@
 
                             </div>
 
+
                             <div class="mb-3">
-                                <label for="description" class="form-label">Description</label>
-                                <div id="editor-container"></div>
-                                <input asp-for="CourseDescription" type="hidden" id="CourseDescription" />
+                                <label for="CourseDescription" class="form-label">Description</label>
+                                <textarea asp-for="CourseDescription" class="form-control" id="courseDescription" rows="5"></textarea>
                                 <span asp-validation-for="CourseDescription" class="text-danger"></span>
                             </div>
 
@@ -144,8 +108,14 @@
                                 </div>
                                 <div class="card-body d-flex justify-content-center">
                                     <div class="mb-3 d-flex flex-column align-items-center">
-                                        <img id="previewImage" src="https://cdn-icons-png.flaticon.com/512/1160/1160358.png" alt="Edit Photo" class="img-fluid mb-2">
-                                        <span class="fw-bold text-primary">Add Photo</span>
+                                        @if (Model.CoursePicture != null && !string.IsNullOrEmpty(Model.CoursePicture.FileName))
+                                        {
+                                            <img id="previewImage" src="@Model.CoursePicture.FileName" alt="Uploaded Photo" class="img-fluid mb-2">
+                                        }
+                                        else
+                                        {
+                                            <img id="previewImage" src="https://cdn-icons-png.flaticon.com/512/1160/1160358.png" alt="Default Photo" class="img-fluid mb-2">
+                                        }                                   <span class="fw-bold text-primary">Add Photo</span>
                                         <input asp-for="CoursePicture" class="form-control mt-2" type="file" id="formFile" accept="image/*">
                                         <span asp-validation-for="CoursePicture" class="text-danger"></span>
 
@@ -198,32 +168,8 @@
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     @*      <script src="~/js/Course/CreateCourse.js"> </script>
     *@
+
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Khởi tạo Quill Editor
-            var quill = new Quill('#editor-container', {
-                theme: 'snow'
-            });
-
-            // Lấy nội dung từ mô tả và chèn vào Quill editor
-            var descriptionContent = `@Html.Raw(Model.CourseDescription?.Replace("\r\n", "").Replace("'", "\\'"))`;
-            if (descriptionContent) {
-                quill.clipboard.dangerouslyPasteHTML(descriptionContent); // Gán nội dung vào editor mà không bị hiển thị thô
-            }
-
-            // Cập nhật giá trị từ editor vào input ẩn trước khi submit
-            document.querySelector('form').addEventListener('submit', function () {
-                document.getElementById('CourseDescription').value = quill.root.innerHTML;
-
-
-                // Kiểm tra xem người dùng có chọn ảnh không
-                const fileInput = document.getElementById("formFile");
-                if (fileInput.files.length > 0) {
-                    // Nếu có chọn ảnh, lấy tên ảnh và gán vào trường ẩn
-                    document.getElementById('CoursePicture').value = fileInput.files[0].name;
-                }
-            });
-        });
 
         document.getElementById("formFile").addEventListener("change", function (event) {
             const file = event.target.files[0];
@@ -233,6 +179,58 @@
                     document.getElementById("previewImage").src = e.target.result;
                 }
                 reader.readAsDataURL(file);
+            }
+        });
+
+
+        document.querySelector("form").addEventListener("submit", function (event) {
+            let isValid = true;
+
+            // Lấy giá trị từ các trường input
+            const courseName = document.getElementById("courseName").value.trim();
+            const courseCategory = document.getElementById("courseCategory").value.trim();
+            const coursePrice = document.getElementById("coursePrice").value.trim();
+            const courseDescription = document.getElementById("courseDescription").value.trim();
+            const coursePicture = document.getElementById("formFile").files.length;
+
+            // Xóa các thông báo lỗi trước đó
+            document.querySelectorAll(".text-danger").forEach(function (errorSpan) {
+                errorSpan.textContent = "";
+            });
+
+            // Kiểm tra trường "Name course"
+            if (courseName === "") {
+                document.querySelector("[asp-validation-for='CourseName']").textContent = "Course name is required.";
+                isValid = false;
+            }
+
+            // Kiểm tra trường "Category"
+            if (courseCategory === "") {
+                document.querySelector("[asp-validation-for='CourseCategoryId']").textContent = "Category is required.";
+                isValid = false;
+            }
+
+            // Kiểm tra trường "Price"
+            if (coursePrice === "" || isNaN(coursePrice) || coursePrice <= 0) {
+                document.querySelector("[asp-validation-for='Price']").textContent = "Price must be a positive number.";
+                isValid = false;
+            }
+
+            // Kiểm tra trường "Description"
+            if (courseDescription === "") {
+                document.querySelector("[asp-validation-for='CourseDescription']").textContent = "Description is required.";
+                isValid = false;
+            }
+
+            // Kiểm tra trường "Picture"
+            if (coursePicture === 0) {
+                document.querySelector("[asp-validation-for='CoursePicture']").textContent = "Course picture is required.";
+                isValid = false;
+            }
+
+            // Nếu có trường nào không hợp lệ, ngăn việc submit form
+            if (!isValid) {
+                event.preventDefault();
             }
         });
 

@@ -6,9 +6,9 @@ namespace BrainStormEra.Controllers
 {
     public class HomePageAdminController : Controller
     {
-        private readonly SwpDb7Context _context;
+        private readonly SwpMainFpContext _context;
 
-        public HomePageAdminController(SwpDb7Context context)
+        public HomePageAdminController(SwpMainFpContext context)
         {
             _context = context;
         }

@@ -34,7 +34,7 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item"><a class="nav-link" href="@Url.Action("HomePageInstructor", "HomePageInstructor")">DASHBOARD</a></li>
-                        <li class="nav-item"><a class="nav-link" href="@Url.Action("DeleteCourse", "Course")">COURSE</a></li>
+                        <li class="nav-item"><a class="nav-link" href="@Url.Action("ManagementCourse", "Course")">COURSE</a></li>
                         <li class="nav-item"><a class="nav-link" href="#">USER</a></li>
                         <li class="nav-item"><a class="nav-link" href="/Certificate/Certificates">CERTIFICATE</a></li>
                     </ul>
@@ -62,9 +62,9 @@
 
 
                 <div class="col-md-3 bg-SECONDARY sidebar p-3">
-                    <a class="btn btn-primary w-100 mb-3" href="@Url.Action("ChapterManagement", "Chapter", new { courseId = courseId })">Add Chapter</a>
-                    <a class="btn btn-outline-secondary w-100 mb-3" href="@Url.Action("DeleteChapter", "Chapter",new { courseId = courseId })">Delete Chapter</a>
-                    <a class="btn btn-outline-secondary w-100" href="@Url.Action("ViewChapters", "Chapter", new { courseId = courseId })">View Chapter</a>
+                    <a class="btn btn-primary w-100 mb-3" href="@Url.Action("ChapterManagement", "Chapter")">Add Chapter</a>
+                    <a class="btn btn-outline-secondary w-100 mb-3" href="@Url.Action("DeleteChapter", "Chapter")">Delete Chapter</a>
+                    <a class="btn btn-outline-secondary w-100" href="@Url.Action("ViewChapters", "Chapter")">View Chapter</a>
 
                 </div>
             }
@@ -79,7 +79,6 @@
                             <!-- Example of chapters with checkboxes -->
                             @foreach (var c in Model)
                             {
-                                <input type="hidden" name="CourseId" value="@ViewBag.CourseId" />
 
 
                                 <div class="form-check mb-3">

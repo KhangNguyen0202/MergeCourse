@@ -10,15 +10,16 @@ namespace BrainStormEra.Controllers.Course
     {
 
 
-        private readonly SwpDb7Context _context;
-        public CourseController(SwpDb7Context context)
+        private readonly SwpMainFpContext _context;
+        private readonly ILogger<CourseController> _logger;
+        public CourseController(SwpMainFpContext context, ILogger<CourseController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
 
 
-        // GET: CourseController/Details/5
         public ActionResult Details(int id)
         {
             return View();
@@ -27,7 +28,6 @@ namespace BrainStormEra.Controllers.Course
 
 
 
-        // GET: CourseController
         public ActionResult CreateCourse()
         {
             var viewmodel = new CreateCourseViewModel
@@ -36,98 +36,72 @@ namespace BrainStormEra.Controllers.Course
             };
 
             return View(viewmodel);
-
         }
 
 
 
 
-        // GET: CourseController/Create
         [HttpPost]
         public ActionResult CreateCourse(CreateCourseViewModel viewmodel)
         {
+            var userId = Request.Cookies["user_id"];
+            var lastCourse = _context.Courses.OrderByDescending(c => c.CourseId).FirstOrDefault();
+            var newCourseId = lastCourse == null ? "CO001" : "CO" + (int.Parse(lastCourse.CourseId.Substring(2)) + 1).ToString("D3");
 
-            if (ModelState.IsValid)
+            // CheckDuplicate() namecourse
+            var existingCourse = _context.Courses.FirstOrDefault(c => c.CourseName == viewmodel.CourseName && c.CourseId != viewmodel.CourseId);
+            if (existingCourse != null)
             {
-
-                // CheckDuplicate() namecourse
-                var existingCourse = _context.Courses.FirstOrDefault(c => c.CourseName == viewmodel.CourseName);
-                if (existingCourse != null)
-                {
-                    ModelState.AddModelError("CourseName", "The Course Name already exists. Please enter a different name.");
-                    viewmodel.CourseCategories = _context.CourseCategories.ToList();
-                }
-                var obj = new Models.Course
-                {
-                    CourseId = viewmodel.CourseId,
-                    CourseName = viewmodel.CourseName,
-                    CourseDescription = viewmodel.CourseDescription,
-                    CourseStatus = 0,
-                    CreatedBy = Request.Cookies["user_id"],
-                    CoursePicture = viewmodel.CoursePicture.FileName,
-                    Price = viewmodel.Price,
-                };
-                var selectedCategory = _context.CourseCategories.FirstOrDefault(c => c.CourseCategoryId == viewmodel.CourseCategoryId);
-
-                if (selectedCategory != null)
-                {
-                    // Gán danh mục cho khóa học
-                    obj.CourseCategories = new List<CourseCategory> { selectedCategory };
-                }
-
-                _context.Courses.Add(obj);
-                _context.SaveChanges();
-
-            }
-            else
-            {
-                foreach (var state in ModelState)
-                {
-                    foreach (var error in state.Value.Errors)
-                    {
-                        Console.WriteLine($"Error in {state.Key}: {error.ErrorMessage}");
-                    }
-                }
+                ModelState.AddModelError("CourseName", "The Course Name already exists. Please enter a different name.");
                 viewmodel.CourseCategories = _context.CourseCategories.ToList();
                 return View(viewmodel);
             }
+            var obj = new Models.Course
+            {
+                CourseId = newCourseId,
+                CourseName = viewmodel.CourseName,
+                CourseDescription = viewmodel.CourseDescription,
+                CourseStatus = 1,
+                CreatedBy = userId,
+                CoursePicture = viewmodel.CoursePicture.FileName,
+                Price = viewmodel.Price,
+            };
+
+            var selectedCategory = _context.CourseCategories.FirstOrDefault(c => c.CourseCategoryId == viewmodel.CourseCategoryId);
+
+            if (selectedCategory != null)
+            {
+                // Gán danh mục cho khóa học
+                obj.CourseCategories = new List<CourseCategory> { selectedCategory };
+            }
+
+            _context.Courses.Add(obj);
+            _context.SaveChanges();
             viewmodel.CourseCategories = _context.CourseCategories.ToList();
-            return RedirectToAction("DeleteCourse");
+            return RedirectToAction("ManagementCourse");
 
         }
 
 
 
 
-        // POST: CourseController/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+
+
+
+
+        // EditCourse
+        [HttpGet]
+        public ActionResult EditCourse()
         {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
-
-
-
-        // GET: CourseController/Edit/5
-        public ActionResult EditCourse(String id)
-        {
-            Response.Cookies.Append("CourseId", id.ToString());
+            var courseId = HttpContext.Request.Cookies["CourseId"];
 
             var course = _context.Courses
                     .Include(c => c.CourseCategories)
-                    .FirstOrDefault(c => c.CourseId == id);
+                    .FirstOrDefault(c => c.CourseId == courseId);
 
             if (course == null)
             {
-                return NotFound();
+                return RedirectToAction("ManagementCourse");
             }
             var viewModel = new EditCourseViewModel
             {
@@ -141,8 +115,7 @@ namespace BrainStormEra.Controllers.Course
             };
             return View(viewModel);
         }
-
-
+        //
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -156,7 +129,7 @@ namespace BrainStormEra.Controllers.Course
 
                 if (course == null)
                 {
-                    return NotFound();
+                    return RedirectToAction("ManagementCourse");
                 }
                 var existingCourse = _context.Courses.FirstOrDefault(c => c.CourseName == viewmodel.CourseName);
                 if (existingCourse != null)
@@ -187,7 +160,7 @@ namespace BrainStormEra.Controllers.Course
                     course.CourseCategories.Add(selectedCategory);
                 }
                 _context.SaveChanges();
-                return RedirectToAction("DeleteCourse");
+                return RedirectToAction("ManagementCourse");
             }
 
             viewmodel.CourseCategories = _context.CourseCategories.ToList();
@@ -200,75 +173,358 @@ namespace BrainStormEra.Controllers.Course
 
 
 
-        // GET: CourseController/Delete/5
+        // GET: ManagementCourse
+        public ActionResult ManagementCourse()
+        {
+            var userId = Request.Cookies["user_id"];
+            var user_role = Request.Cookies["user_role"];
+
+
+            switch (user_role)
+            {
+                // Role Instructor
+                case "2":
+                    var instructorCourses = _context.Courses
+                        .Include(c => c.CourseCategories)
+                        .Include(c => c.Enrollments)
+                        .Include(c => c.CreatedByNavigation) // Include thông tin người tạo từ bảng Account
+                        .Where(c => c.CourseStatus == 2 && c.CreatedBy == userId)  // Lọc khóa học có status là 2 và được tạo bởi người dùng hiện tại
+                        .OrderByDescending(c => c.CourseCreatedAt)
+                        .Select(course => new ManagementCourseViewModel
+                        {
+                            CourseId = course.CourseId,
+                            CourseName = course.CourseName,
+                            CourseDescription = course.CourseDescription,
+                            CourseStatus = course.CourseStatus,
+                            CoursePicture = course.CoursePicture,
+                            Price = course.Price,
+                            CourseCreatedAt = course.CourseCreatedAt,
+                            CreatedBy = course.CreatedBy,  // Lấy thông tin người tạo
+                            CourseCategories = course.CourseCategories.ToList(),
+                            StarRating = (byte?)Math.Round(
+                                _context.Feedbacks
+                                .Where(f => f.CourseId == course.CourseId)
+                                .Average(f => (double?)f.StarRating) ?? 0)
+                        })
+                        .ToList();
+
+                    return View("ManagementCourse", instructorCourses);
+
+                // Default case: Khi không khớp vai trò nào
+                default:
+                    var Course = _context.Courses
+                        .Include(c => c.CourseCategories)
+                        .Include(c => c.Enrollments)
+                        .Where(c => c.CourseStatus == 2)  // Lọc khóa học có status là 2
+                        .OrderByDescending(c => c.CourseCreatedAt)
+                        .Select(course => new ManagementCourseViewModel
+                        {
+                            CourseId = course.CourseId,
+                            CourseName = course.CourseName,
+                            CourseDescription = course.CourseDescription,
+                            CourseStatus = course.CourseStatus,
+                            CoursePicture = course.CoursePicture,
+                            Price = course.Price,
+                            CourseCreatedAt = course.CourseCreatedAt,
+                            CreatedBy = course.CreatedBy,  // Lấy thông tin người tạo
+                            CourseCategories = course.CourseCategories.ToList(),
+                            StarRating = (byte?)Math.Round(
+                                _context.Feedbacks
+                                .Where(f => f.CourseId == course.CourseId)
+                                .Average(f => (double?)f.StarRating) ?? 0)
+                        })
+                        .ToList();
+
+                    return View("ManagementCourse", Course);
+            }
+        }
+
+
+
+        public ActionResult ConfirmDelete()
+        {
+            var courseId = HttpContext.Request.Cookies["CourseId"];
+
+            var course = _context.Courses
+                   .Include(c => c.CourseCategories)
+                   .FirstOrDefault(c => c.CourseId == courseId);
+            var viewModel = new DeleteCourseViewModel
+            {
+                CourseId = course.CourseId,
+                CourseName = course.CourseName,
+                CourseCategories = _context.CourseCategories.ToList(),
+                CourseCategoryId = course.CourseCategories.FirstOrDefault()?.CourseCategoryId, // Chọn Category hiện tại nếu có
+                CourseDescription = course.CourseDescription,
+                CoursePictureFile = course.CoursePicture,
+                Price = course.Price
+            };
+            return View("DeleteCourse", viewModel);
+        }
+
+
+        [HttpPost]
         public ActionResult DeleteCourse()
         {
-            var courses = _context.Courses
-        .Include(c => c.CourseCategories)
-        .Include(c => c.Enrollments)
-        .Include(c => c.CreatedByNavigation)
-        .OrderByDescending(c => c.CourseCreatedAt)
-        .Select(course => new DeleteCourseViewModel
-        {
-            CourseId = course.CourseId,
-            CourseName = course.CourseName,
-            CourseDescription = course.CourseDescription,
-            CourseStatus = course.CourseStatus,
-            CoursePicture = course.CoursePicture,
-            Price = course.Price,
-            CourseCreatedAt = course.CourseCreatedAt,
-            CreatedBy = course.CreatedByNavigation.FullName,
-            CourseCategories = course.CourseCategories.ToList(),
-            StarRating = (byte?)Math.Round(
-         _context.Feedbacks
-        .Where(f => f.CourseId == course.CourseId)
-        .Average(f => (double?)f.StarRating) ?? 0)
-        })
-        .ToList();
 
-            return View(courses);
+            var courseID = HttpContext.Request.Cookies["CourseId"];
+
+
+            var course = _context.Courses.Find(courseID);
+
+            if (course != null)
+            {
+
+                _context.Courses.Remove(course);
+                _context.SaveChanges();
+
+
+                var userRole = HttpContext.Request.Cookies["user_role"];
+
+
+                if (userRole == "1")
+                {
+                    return RedirectToAction("CourseAcceptance", "Course");
+                }
+                else if (userRole == "2")
+                {
+                    return RedirectToAction("ManagementCourse");
+                }
+
+            }
+
+            return RedirectToAction("ErrorPage", "Home");
         }
 
 
 
         [HttpGet]
-        public ActionResult Delete(string id)
-        {
-            var course = _context.Courses.Find(id);
-            if (course == null)
-            {
-                return HttpNotFound();
-            }
-            _context.Courses.Remove(course);
-            _context.SaveChanges();
-
-            return RedirectToAction("DeleteCourse");
-        }
-
-
-
-        private ActionResult HttpNotFound()
-        {
-            throw new NotImplementedException();
-        }
-
-
-
-
-
-        // POST: CourseController/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public IActionResult CourseDetail(int page = 1, int pageSize = 4)
         {
             try
             {
-                return RedirectToAction(nameof(Index));
+                var courseId = Request.Cookies["CourseId"];
+
+                if (string.IsNullOrEmpty(courseId))
+                {
+                    _logger.LogWarning("Course ID is null or empty.");
+                    return View("ErrorPage", "Course ID not found in cookies.");
+                }
+
+                // Lấy thông tin khóa học
+                var course = _context.Courses
+                             .Include(c => c.Chapters)
+                             .ThenInclude(ch => ch.Lessons)
+                             .FirstOrDefault(c => c.CourseId == courseId);
+
+                if (course == null)
+                {
+                    _logger.LogError($"Course not found with ID: {courseId}");
+                    return View("ErrorPage", "Course not found.");
+                }
+
+                // Tính toán số lượng học viên đã đăng ký (enrollments)
+                var learnersCount = _context.Enrollments
+                                    .Where(e => e.CourseId == courseId && e.Approved == true)
+                                    .Count();
+                ViewBag.LearnersCount = learnersCount;
+
+                // Lấy danh sách feedback (comment và rating) theo phân trang
+                var feedbacks = _context.Feedbacks
+                                .Where(f => f.CourseId == courseId && f.HiddenStatus == false)
+                                .Include(f => f.User)
+                                .OrderByDescending(f => f.FeedbackDate) // Sắp xếp feedback mới nhất lên trên
+                                .Skip((page - 1) * pageSize)
+                                .Take(pageSize)
+                                .ToList();
+
+                // Tính tổng số comment và rating trung bình
+                var totalComments = _context.Feedbacks.Count(f => f.CourseId == courseId && f.HiddenStatus == false);
+                var averageRating = totalComments > 0 ? _context.Feedbacks
+                                                        .Where(f => f.CourseId == courseId && f.HiddenStatus == false)
+                                                        .Average(f => f.StarRating) : 0;
+
+                ViewBag.TotalComments = totalComments;
+                ViewBag.AverageRating = averageRating;
+                ViewBag.Comments = feedbacks;
+
+                // Phân trang
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = (int)Math.Ceiling((double)totalComments / pageSize);
+
+                // Lấy thông tin người tạo khóa học
+                var createdBy = _context.Accounts.FirstOrDefault(a => a.UserId == course.CreatedBy);
+                if (createdBy != null)
+                {
+                    ViewBag.CreatedBy = createdBy.FullName;
+                }
+                else
+                {
+                    ViewBag.CreatedBy = "Unknown";
+                }
+
+                // Tính phần trăm mỗi mức rating (1-5 sao)
+                var ratingPercentages = new Dictionary<int, double>();
+
+                for (int i = 1; i <= 5; i++)
+                {
+                    var count = feedbacks.Count(f => f.StarRating == i);
+                    ratingPercentages[i] = feedbacks.Count > 0 ? (double)count / feedbacks.Count() : 0;
+                }
+
+                ViewBag.RatingPercentages = ratingPercentages;
+
+
+
+
+                return View(course);
             }
-            catch
+            catch (Exception ex)
             {
-                return View();
+                _logger.LogError(ex, "An error occurred while loading the course.");
+                return View("ErrorPage", "An unexpected error occurred.");
             }
         }
+
+
+
+        [HttpGet]
+        public ActionResult CourseAcceptance()
+        {
+            var pendingCourses = _context.Courses
+                .Where(c => c.CourseStatus == 1 || c.CourseStatus == 2)
+                .Include(c => c.CourseCategories)
+                .OrderBy(c => c.CourseStatus)
+                .Select(course => new ManagementCourseViewModel
+                {
+                    CourseId = course.CourseId,
+                    CourseName = course.CourseName,
+                    CourseDescription = course.CourseDescription,
+                    CourseStatus = course.CourseStatus,
+                    CoursePicture = course.CoursePicture,
+                    Price = course.Price,
+                    CourseCreatedAt = course.CourseCreatedAt,
+                    CreatedBy = course.CreatedBy,
+                    CourseCategories = course.CourseCategories.ToList(),
+                    StarRating = (byte?)Math.Round(
+                        _context.Feedbacks
+                            .Where(f => f.CourseId == course.CourseId)
+                            .Average(f => (double?)f.StarRating) ?? 0)
+                })
+                .ToList();
+
+            return View("CourseAcceptance", pendingCourses);
+        }
+
+
+
+
+
+
+        [HttpGet]
+        public IActionResult ReviewCourse(int page = 1, int pageSize = 4)
+        {
+            try
+            {
+                var courseId = Request.Cookies["CourseId"];
+
+                if (string.IsNullOrEmpty(courseId))
+                {
+                    _logger.LogWarning("Course ID is null or empty.");
+                    return View("ErrorPage", "Course ID not found in cookies.");
+                }
+
+                // Lấy thông tin khóa học
+                var course = _context.Courses
+                                     .Include(c => c.Chapters)
+                                     .ThenInclude(ch => ch.Lessons)
+                                     .FirstOrDefault(c => c.CourseId == courseId);
+
+                if (course == null)
+                {
+                    _logger.LogError($"Course not found with ID: {courseId}");
+                    return View("ErrorPage", "Course not found.");
+                }
+
+                // Tính toán số lượng học viên đã đăng ký (enrollments)
+                var learnersCount = _context.Enrollments
+                                            .Where(e => e.CourseId == courseId && e.Approved == true)
+                                            .Count();
+                ViewBag.LearnersCount = learnersCount;
+
+                // Lấy danh sách feedback (comment và rating) theo phân trang
+                var feedbacks = _context.Feedbacks
+                                        .Where(f => f.CourseId == courseId && f.HiddenStatus == false)
+                                        .Include(f => f.User)
+                                        .OrderByDescending(f => f.FeedbackDate) // Sắp xếp feedback mới nhất lên trên
+                                        .Skip((page - 1) * pageSize)
+                                        .Take(pageSize)
+                                        .ToList();
+
+                // Tính tổng số comment và rating trung bình
+                var totalComments = _context.Feedbacks.Count(f => f.CourseId == courseId && f.HiddenStatus == false);
+                var averageRating = totalComments > 0 ? _context.Feedbacks
+                                                        .Where(f => f.CourseId == courseId && f.HiddenStatus == false)
+                                                        .Average(f => f.StarRating) : 0;
+
+                ViewBag.TotalComments = totalComments;
+                ViewBag.AverageRating = averageRating;
+                ViewBag.Comments = feedbacks;
+
+                // Phân trang
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = (int)Math.Ceiling((double)totalComments / pageSize);
+
+                // Lấy thông tin người tạo khóa học
+                var createdBy = _context.Accounts.FirstOrDefault(a => a.UserId == course.CreatedBy);
+                if (createdBy != null)
+                {
+                    ViewBag.CreatedBy = createdBy.FullName;
+                }
+                else
+                {
+                    ViewBag.CreatedBy = "Unknown";
+                }
+
+                // Truyền CourseStatus vào ViewBag
+                ViewBag.CourseStatus = course.CourseStatus;
+
+                // Tính phần trăm mỗi mức rating (1-5 sao)
+                var ratingPercentages = new Dictionary<int, double>();
+
+                for (int i = 1; i <= 5; i++)
+                {
+                    var count = feedbacks.Count(f => f.StarRating == i);
+                    ratingPercentages[i] = feedbacks.Count > 0 ? (double)count / feedbacks.Count() : 0;
+                }
+
+                ViewBag.RatingPercentages = ratingPercentages;
+
+                return View(course);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while loading the course.");
+                return View("ErrorPage", "An unexpected error occurred.");
+            }
+        }
+
+
+        [HttpPost]
+        public IActionResult ChangeStatus(string courseId, int status)
+        {
+            var course = _context.Courses.FirstOrDefault(c => c.CourseId == courseId);
+            if (course != null)
+            {
+                course.CourseStatus = status;
+                _context.SaveChanges();
+                // Redirect về trang trước hoặc trang danh sách mà không có ID trên URL
+                return RedirectToAction("CourseAcceptance", "Course");
+            }
+            return View("Error");
+        }
+
+
+
+
     }
 }
